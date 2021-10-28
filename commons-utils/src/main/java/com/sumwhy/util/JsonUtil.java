@@ -36,7 +36,7 @@ public class JsonUtil {
         FAST_JSON_LIKE_OBJECT_MAPPER.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         FAST_JSON_LIKE_OBJECT_MAPPER.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         FAST_JSON_LIKE_OBJECT_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        FAST_JSON_LIKE_OBJECT_MAPPER.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        FAST_JSON_LIKE_OBJECT_MAPPER.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     }
 
     private JsonUtil() {
