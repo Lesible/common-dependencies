@@ -1,11 +1,14 @@
 package com.sumwhy.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * <p> 返回结果体 </p>
  * <p> created at 2021-11-04 15:30 by lesible </p>
  *
  * @author 何嘉豪
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Result<T> {
 
     public static final Result<Void> SUCCESS_RESULT = new Result<>(0, "success", null);
