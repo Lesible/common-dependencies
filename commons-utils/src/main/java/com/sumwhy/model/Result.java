@@ -30,6 +30,14 @@ public class Result<T> {
     public Result() {
     }
 
+    public static Result<Void> successMsg(String msg) {
+        return new Result<>(0, msg, null);
+    }
+
+    public static <T> Result<T> successData(String msg, T data) {
+        return new Result<>(0, msg, data);
+    }
+
     public static <T> Result<T> successData(T data) {
         return new Result<>(0, "success", data);
     }
