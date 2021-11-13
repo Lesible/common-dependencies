@@ -51,11 +51,36 @@ public class JsonUtil {
         }
     }
 
+    /**
+     * 深拷贝
+     *
+     * @param source           来源
+     * @param parametrized     范型基本类
+     * @param parameterClasses 范型上面的类
+     */
+    public static <T> T deepClone(Object source, Class<?> parametrized, Class<?>... parameterClasses) {
+        String name = parametrized.getSimpleName();
+        if (parameterClasses != null && parameterClasses.length > 0) {
+            name += Arrays.stream(parameterClasses).map(Class::getSimpleName).collect(Collectors.joining("_"));
+        }
+        JavaType javaType = TYPE_MAPPING.computeIfAbsent(name, it ->
+                OBJECT_MAPPER.getTypeFactory().constructParametricType(parametrized, parameterClasses));
+        return OBJECT_MAPPER.convertValue(source, javaType);
+    }
+
+
     public static String jsonValue(Object o) {
         return jsonValue(o, OBJECT_MAPPER);
     }
 
+    private static boolean isEmpty(String str) {
+        return str == null || str.trim().length() == 0;
+    }
+
     public static <T> T parseJson(String json, ObjectMapper objectMapper, Class<T> clazz) {
+        if (isEmpty(json)) {
+            return null;
+        }
         try {
             return objectMapper.readValue(json, clazz);
         } catch (JsonProcessingException e) {
@@ -65,6 +90,9 @@ public class JsonUtil {
     }
 
     public static <T> T parseJson(String json, ObjectMapper objectMapper, JavaType javaType) {
+        if (isEmpty(json)) {
+            return null;
+        }
         try {
             return objectMapper.readValue(json, javaType);
         } catch (JsonProcessingException e) {
@@ -74,6 +102,9 @@ public class JsonUtil {
     }
 
     public static <T> T parseJson(String json, ObjectMapper objectMapper, ReferenceType referenceType) {
+        if (isEmpty(json)) {
+            return null;
+        }
         try {
             return objectMapper.readValue(json, referenceType);
         } catch (JsonProcessingException e) {
@@ -83,18 +114,13 @@ public class JsonUtil {
     }
 
     public static <T> T parseJson(String json, ObjectMapper objectMapper, Class<?> parametrized, Class<?>... parameterClasses) {
-        try {
-            String name = parametrized.getSimpleName();
-            if (parameterClasses != null && parameterClasses.length > 0) {
-                name += Arrays.stream(parameterClasses).map(Class::getSimpleName).collect(Collectors.joining("_"));
-            }
-            JavaType javaType = TYPE_MAPPING.computeIfAbsent(name, it ->
-                    objectMapper.getTypeFactory().constructParametricType(parametrized, parameterClasses));
-            return objectMapper.readValue(json, javaType);
-        } catch (JsonProcessingException e) {
-            log.error("解析 json 出错,jsonStr:{}", json, e);
-            return null;
+        String name = parametrized.getSimpleName();
+        if (parameterClasses != null && parameterClasses.length > 0) {
+            name += Arrays.stream(parameterClasses).map(Class::getSimpleName).collect(Collectors.joining("_"));
         }
+        JavaType javaType = TYPE_MAPPING.computeIfAbsent(name, it ->
+                objectMapper.getTypeFactory().constructParametricType(parametrized, parameterClasses));
+        return parseJson(json, objectMapper, javaType);
     }
 
     public static <T> List<T> parseList(String json, ObjectMapper objectMapper, Class<T> clazz) {
@@ -104,6 +130,39 @@ public class JsonUtil {
             return typeFactory.constructCollectionType(ArrayList.class, clazz);
         });
         return parseJson(json, objectMapper, javaType);
+    }
+
+    public static JavaType constructType(Class<?> rawType, Class<?>... parameterClasses) {
+        String name = rawType.getSimpleName();
+        if (parameterClasses != null && parameterClasses.length > 0) {
+            name += Arrays.stream(parameterClasses).map(Class::getSimpleName).collect(Collectors.joining("_"));
+        }
+        return TYPE_MAPPING.computeIfAbsent(name, it ->
+                OBJECT_MAPPER.getTypeFactory().constructParametricType(rawType, parameterClasses));
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static JavaType constructCollectionType(Class<? extends Collection> colClass, JavaType javaType) {
+        return OBJECT_MAPPER.getTypeFactory().constructCollectionType(colClass, javaType);
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static JavaType constructMapType(Class<? extends Map> MapClass, JavaType keyType, JavaType valueType) {
+        return OBJECT_MAPPER.getTypeFactory().constructMapType(MapClass, keyType, valueType);
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static JavaType constructMapType(Class<? extends Map> MapClass, Class<?> keyClass, Class<?> valueClass) {
+        return OBJECT_MAPPER.getTypeFactory().constructMapType(MapClass, keyClass, valueClass);
+    }
+
+    public static <T> List<T> parseList(String json, ObjectMapper objectMapper, JavaType javaType) {
+        String name = javaType.getTypeName();
+        JavaType bindType = TYPE_MAPPING.computeIfAbsent(name, it -> {
+            TypeFactory typeFactory = objectMapper.getTypeFactory();
+            return typeFactory.constructCollectionType(ArrayList.class, javaType);
+        });
+        return parseJson(json, objectMapper, bindType);
     }
 
     public static <K, V> Map<K, V> parseMap(String json, ObjectMapper objectMapper, Class<K> kClazz, Class<V> vClazz) {
@@ -137,6 +196,10 @@ public class JsonUtil {
 
     public static <T> List<T> parseList(String json, Class<T> clazz) {
         return parseList(json, OBJECT_MAPPER, clazz);
+    }
+
+    public static <T> List<T> parseList(String json, JavaType javaType) {
+        return parseList(json, OBJECT_MAPPER, javaType);
     }
 
     public static <K, V> Map<K, V> parseMap(String json, Class<K> kClazz, Class<V> vClazz) {
