@@ -42,6 +42,23 @@ public class JsonUtil {
     private JsonUtil() {
     }
 
+    /**
+     * 使用默认的 objectMapper 转换为 jsonStr
+     *
+     * @param o 对象
+     * @return jsonStr
+     */
+    public static String jsonValue(Object o) {
+        return jsonValue(o, OBJECT_MAPPER);
+    }
+
+    /**
+     * 使用指定的 objectMapper 转换为 jsonStr
+     *
+     * @param o            对象
+     * @param objectMapper 指定转换规则的 objectMapper
+     * @return jsonStr
+     */
     public static String jsonValue(Object o, ObjectMapper objectMapper) {
         try {
             return objectMapper.writeValueAsString(o);
@@ -59,151 +76,359 @@ public class JsonUtil {
      * @param parameterClasses 范型上面的类
      */
     public static <T> T deepClone(Object source, Class<?> parametrized, Class<?>... parameterClasses) {
-        String name = parametrized.getSimpleName();
-        if (parameterClasses != null && parameterClasses.length > 0) {
-            name += Arrays.stream(parameterClasses).map(Class::getSimpleName).collect(Collectors.joining("_"));
-        }
-        JavaType javaType = TYPE_MAPPING.computeIfAbsent(name, it ->
-                OBJECT_MAPPER.getTypeFactory().constructParametricType(parametrized, parameterClasses));
+        JavaType javaType = constructType(parametrized, parameterClasses);
         return OBJECT_MAPPER.convertValue(source, javaType);
     }
 
-
-    public static String jsonValue(Object o) {
-        return jsonValue(o, OBJECT_MAPPER);
+    /**
+     * 深拷贝
+     *
+     * @param source   来源
+     * @param javaType 类型
+     */
+    public static <T> T deepClone(Object source, JavaType javaType) {
+        return OBJECT_MAPPER.convertValue(source, javaType);
     }
 
+    /**
+     * 使用 jackson 更新数据
+     *
+     * @param source 来源
+     * @param target 目标
+     */
+    public static <T> T updateValue(Object source, T target) {
+        try {
+            return OBJECT_MAPPER.updateValue(target, source);
+        } catch (JsonMappingException e) {
+            log.error("尝试使用 source: {} 更新数据失败", source, e);
+        }
+        return target;
+    }
+
+    // ---------- 解析 json-------------
+
+    /**
+     * 简单的内置字符串判空
+     *
+     * @param str 字符串
+     * @return 是否为空 true 为空
+     */
     private static boolean isEmpty(String str) {
         return str == null || str.trim().length() == 0;
     }
 
-    public static <T> T parseJson(String json, ObjectMapper objectMapper, Class<T> clazz) {
-        if (isEmpty(json)) {
+    /**
+     * 使用指定的 objectMapper 转换 jsonStr 为对象
+     *
+     * @param jsonStr      jsonStr
+     * @param objectMapper 指定转换规则的 objectMapper
+     * @param clazz        类型
+     * @param <T>          Class 的范型
+     * @return 转换后的对象
+     */
+    public static <T> T parseJson(String jsonStr, ObjectMapper objectMapper, Class<T> clazz) {
+        if (isEmpty(jsonStr)) {
             return null;
         }
         try {
-            return objectMapper.readValue(json, clazz);
+            return objectMapper.readValue(jsonStr, clazz);
         } catch (JsonProcessingException e) {
-            log.error("解析 json 出错,jsonStr:{}", json, e);
+            log.error("解析 json 出错,jsonStr:{}", jsonStr, e);
             return null;
         }
     }
 
-    public static <T> T parseJson(String json, ObjectMapper objectMapper, JavaType javaType) {
-        if (isEmpty(json)) {
+    /**
+     * 使用指定的 objectMapper 转换 jsonStr 为对象
+     *
+     * @param jsonStr      jsonStr
+     * @param objectMapper 指定转换规则的 objectMapper
+     * @param javaType     类型
+     * @param <T>          Class 的范型
+     * @return 转换后的对象
+     */
+    public static <T> T parseJson(String jsonStr, ObjectMapper objectMapper, JavaType javaType) {
+        if (isEmpty(jsonStr)) {
             return null;
         }
         try {
-            return objectMapper.readValue(json, javaType);
+            return objectMapper.readValue(jsonStr, javaType);
         } catch (JsonProcessingException e) {
-            log.error("解析 json 出错,jsonStr:{}", json, e);
+            log.error("解析 json 出错,jsonStr:{}", jsonStr, e);
             return null;
         }
     }
 
-    public static <T> T parseJson(String json, ObjectMapper objectMapper, ReferenceType referenceType) {
-        if (isEmpty(json)) {
+    /**
+     * 使用指定的 objectMapper 转换 jsonStr 为对象
+     *
+     * @param jsonStr       jsonStr
+     * @param objectMapper  指定转换规则的 objectMapper
+     * @param referenceType 类型
+     * @param <T>           Class 的范型
+     * @return 转换后的对象
+     */
+    public static <T> T parseJson(String jsonStr, ObjectMapper objectMapper, ReferenceType referenceType) {
+        if (isEmpty(jsonStr)) {
             return null;
         }
         try {
-            return objectMapper.readValue(json, referenceType);
+            return objectMapper.readValue(jsonStr, referenceType);
         } catch (JsonProcessingException e) {
-            log.error("解析 json 出错,jsonStr:{}", json, e);
+            log.error("解析 json 出错,jsonStr:{}", jsonStr, e);
             return null;
         }
     }
 
-    public static <T> T parseJson(String json, ObjectMapper objectMapper, Class<?> parametrized, Class<?>... parameterClasses) {
-        String name = parametrized.getSimpleName();
-        if (parameterClasses != null && parameterClasses.length > 0) {
-            name += Arrays.stream(parameterClasses).map(Class::getSimpleName).collect(Collectors.joining("_"));
-        }
-        JavaType javaType = TYPE_MAPPING.computeIfAbsent(name, it ->
-                objectMapper.getTypeFactory().constructParametricType(parametrized, parameterClasses));
-        return parseJson(json, objectMapper, javaType);
+    /**
+     * 使用指定的 objectMapper 转换 jsonStr 为对象
+     *
+     * @param jsonStr          jsonStr
+     * @param objectMapper     指定转换规则的 objectMapper
+     * @param parametrized     基本类型
+     * @param parameterClasses 范型类型
+     * @param <T>              Class 的范型
+     * @return 转换后的对象
+     */
+    public static <T> T parseJson(String jsonStr, ObjectMapper objectMapper, Class<?> parametrized, Class<?>... parameterClasses) {
+        JavaType javaType = constructType(parametrized, parameterClasses);
+        return parseJson(jsonStr, objectMapper, javaType);
     }
 
-    public static <T> List<T> parseList(String json, ObjectMapper objectMapper, Class<T> clazz) {
-        String name = clazz.getSimpleName();
-        JavaType javaType = TYPE_MAPPING.computeIfAbsent(name, it -> {
-            TypeFactory typeFactory = objectMapper.getTypeFactory();
-            return typeFactory.constructCollectionType(ArrayList.class, clazz);
-        });
-        return parseJson(json, objectMapper, javaType);
+    /**
+     * 使用指定的 objectMapper 转换 jsonStr 为 ArrayList
+     *
+     * @param jsonStr      jsonStr
+     * @param objectMapper 指定转换规则的 objectMapper
+     * @param clazz        范型类型
+     * @param <T>          list 的范型
+     * @return 转换后的对象
+     */
+    public static <T> List<T> parseList(String jsonStr, ObjectMapper objectMapper, Class<T> clazz) {
+        JavaType javaType = constructCollectionType(ArrayList.class, clazz);
+        return parseJson(jsonStr, objectMapper, javaType);
     }
 
+    /**
+     * 使用指定的 objectMapper 转换 jsonStr 为 ArrayList
+     *
+     * @param jsonStr      jsonStr
+     * @param objectMapper 指定转换规则的 objectMapper
+     * @param javaType     范型类型
+     * @param <T>          list 的范型
+     * @return 转换后的对象
+     */
+    public static <T> List<T> parseList(String jsonStr, ObjectMapper objectMapper, JavaType javaType) {
+        JavaType bindType = constructCollectionType(ArrayList.class, javaType);
+        return parseJson(jsonStr, objectMapper, bindType);
+    }
+
+    /**
+     * 使用指定的 objectMapper 转换 jsonStr 为 HashMap
+     *
+     * @param jsonStr      jsonStr
+     * @param objectMapper 指定转换规则的 objectMapper
+     * @param kClazz       键的类型
+     * @param vClazz       值的类型
+     * @param <K>          map 键的范型
+     * @param <V>          map 值的范型
+     * @return 转换后的对象
+     */
+    public static <K, V> Map<K, V> parseMap(String jsonStr, ObjectMapper objectMapper, Class<K> kClazz, Class<V> vClazz) {
+        JavaType mapType = constructMapType(HashMap.class, kClazz, vClazz);
+        return parseJson(jsonStr, objectMapper, mapType);
+    }
+
+    /**
+     * 使用默认的 objectMapper 转换 jsonStr 为指定对象
+     *
+     * @param jsonStr  jsonStr
+     * @param javaType 目标类型
+     * @param <T>      范型
+     * @return 转换后的对象
+     */
+    public static <T> T parseJson(String jsonStr, JavaType javaType) {
+        return parseJson(jsonStr, OBJECT_MAPPER, javaType);
+    }
+
+    /**
+     * 使用默认的 objectMapper 转换 jsonStr 为指定对象
+     *
+     * @param jsonStr       jsonStr
+     * @param referenceType 目标类型
+     * @param <T>           范型
+     * @return 转换后的对象
+     */
+    public static <T> T parseJson(String jsonStr, ReferenceType referenceType) {
+        return parseJson(jsonStr, OBJECT_MAPPER, referenceType);
+    }
+
+    /**
+     * 使用默认的 objectMapper 转换 jsonStr 为指定对象
+     *
+     * @param jsonStr jsonStr
+     * @param clazz   目标类型
+     * @param <T>     范型
+     * @return 转换后的对象
+     */
+    public static <T> T parseJson(String jsonStr, Class<T> clazz) {
+        return parseJson(jsonStr, OBJECT_MAPPER, clazz);
+    }
+
+    /**
+     * 使用默认的 objectMapper 转换 jsonStr 为指定对象
+     *
+     * @param jsonStr          jsonStr
+     * @param parametrized     目标类型
+     * @param parameterClasses 目标范型
+     * @param <T>              范型
+     * @return 转换后的对象
+     */
+    public static <T> T parseJson(String jsonStr, Class<T> parametrized, Class<?>... parameterClasses) {
+        return parseJson(jsonStr, OBJECT_MAPPER, parametrized, parameterClasses);
+    }
+
+    /**
+     * 使用默认的 objectMapper 转换 jsonStr 为 ArrayList
+     *
+     * @param jsonStr jsonStr
+     * @param clazz   目标类型
+     * @param <T>     list 的范型
+     * @return 转换后的对象
+     */
+    public static <T> List<T> parseList(String jsonStr, Class<T> clazz) {
+        return parseList(jsonStr, OBJECT_MAPPER, clazz);
+    }
+
+    /**
+     * 使用默认的 objectMapper 转换 jsonStr 为 ArrayList
+     *
+     * @param jsonStr  jsonStr
+     * @param javaType 目标类型
+     * @param <T>      list 的范型
+     * @return 转换后的对象
+     */
+    public static <T> List<T> parseList(String jsonStr, JavaType javaType) {
+        return parseList(jsonStr, OBJECT_MAPPER, javaType);
+    }
+
+    /**
+     * 使用默认的 objectMapper 转换 jsonStr 为 HashMap
+     *
+     * @param jsonStr jsonStr
+     * @param kClazz  键的类型
+     * @param vClazz  值的类型
+     * @param <K>     map 键的范型
+     * @param <V>     map 值的范型
+     * @return 转换后的对象
+     */
+    public static <K, V> Map<K, V> parseMap(String jsonStr, Class<K> kClazz, Class<V> vClazz) {
+        return parseMap(jsonStr, OBJECT_MAPPER, kClazz, vClazz);
+    }
+
+    // -------------  构建 javaType ----------
+
+
+    /**
+     * 构建基本 javaType
+     *
+     * @param rawType          基本类
+     * @param parameterClasses 范型
+     * @return javaType
+     */
     public static JavaType constructType(Class<?> rawType, Class<?>... parameterClasses) {
         String name = rawType.getSimpleName();
         if (parameterClasses != null && parameterClasses.length > 0) {
-            name += Arrays.stream(parameterClasses).map(Class::getSimpleName).collect(Collectors.joining("_"));
+            name = name + "_" +
+                    Arrays.stream(parameterClasses).map(Class::getSimpleName).collect(Collectors.joining("_"));
         }
         return TYPE_MAPPING.computeIfAbsent(name, it ->
                 OBJECT_MAPPER.getTypeFactory().constructParametricType(rawType, parameterClasses));
     }
 
+    /**
+     * 构建基本 javaType
+     *
+     * @param rawType  基本类
+     * @param javaType 范型
+     * @return javaType
+     */
+    public static JavaType constructType(Class<?> rawType, JavaType javaType) {
+        String name = rawType.getSimpleName();
+        if (javaType != null) {
+            name = name + "_" + javaType.getTypeName();
+        }
+        return TYPE_MAPPING.computeIfAbsent(name, it ->
+                OBJECT_MAPPER.getTypeFactory().constructParametricType(rawType, javaType));
+    }
+
+    /**
+     * 构建集合 javaType
+     *
+     * @param colClass 集合类型
+     * @param javaType 范型
+     * @return javaType
+     */
     @SuppressWarnings("rawtypes")
     public static JavaType constructCollectionType(Class<? extends Collection> colClass, JavaType javaType) {
-        return OBJECT_MAPPER.getTypeFactory().constructCollectionType(colClass, javaType);
+        String name = String.format("col_%s_%s", colClass.getSimpleName(), javaType.getTypeName());
+        return TYPE_MAPPING.computeIfAbsent(name, it -> OBJECT_MAPPER.getTypeFactory().constructCollectionType(colClass, javaType));
     }
 
+    /**
+     * 构建集合 javaType
+     *
+     * @param colClass 集合类型
+     * @param clazz    范型
+     * @return javaType
+     */
     @SuppressWarnings("rawtypes")
-    public static JavaType constructMapType(Class<? extends Map> MapClass, JavaType keyType, JavaType valueType) {
-        return OBJECT_MAPPER.getTypeFactory().constructMapType(MapClass, keyType, valueType);
+    public static JavaType constructCollectionType(Class<? extends Collection> colClass, Class<?> clazz) {
+        String name = String.format("col_%s_%s", colClass.getSimpleName(), clazz.getSimpleName());
+        return TYPE_MAPPING.computeIfAbsent(name, it -> OBJECT_MAPPER.getTypeFactory().constructCollectionType(colClass, clazz));
     }
 
+    /**
+     * 构建 map javaType
+     *
+     * @param mapClass  map 类型
+     * @param keyType   键类型
+     * @param valueType 值类型
+     * @return javaType
+     */
     @SuppressWarnings("rawtypes")
-    public static JavaType constructMapType(Class<? extends Map> MapClass, Class<?> keyClass, Class<?> valueClass) {
-        return OBJECT_MAPPER.getTypeFactory().constructMapType(MapClass, keyClass, valueClass);
-    }
-
-    public static <T> List<T> parseList(String json, ObjectMapper objectMapper, JavaType javaType) {
-        String name = javaType.getTypeName();
-        JavaType bindType = TYPE_MAPPING.computeIfAbsent(name, it -> {
-            TypeFactory typeFactory = objectMapper.getTypeFactory();
-            return typeFactory.constructCollectionType(ArrayList.class, javaType);
+    public static JavaType constructMapType(Class<? extends Map> mapClass, JavaType keyType, JavaType valueType) {
+        String name = String.format("map_%s_%s_%s", mapClass.getSimpleName(), keyType.getTypeName(), valueType.getTypeName());
+        return TYPE_MAPPING.computeIfAbsent(name, it -> {
+            TypeFactory typeFactory = OBJECT_MAPPER.getTypeFactory();
+            return typeFactory.constructMapType(mapClass, keyType, valueType);
         });
-        return parseJson(json, objectMapper, bindType);
     }
 
-    public static <K, V> Map<K, V> parseMap(String json, ObjectMapper objectMapper, Class<K> kClazz, Class<V> vClazz) {
-        String name = String.format("%s_%s", kClazz.getSimpleName(), vClazz.getSimpleName());
-        JavaType mapType = TYPE_MAPPING.computeIfAbsent(name, it -> {
-            TypeFactory typeFactory = objectMapper.getTypeFactory();
-            return typeFactory.constructMapType(HashMap.class, kClazz, vClazz);
+    /**
+     * 构建 map javaType
+     *
+     * @param mapClass   map 类型
+     * @param keyClass   键类型
+     * @param valueClass 值类型
+     * @return javaType
+     */
+    @SuppressWarnings("rawtypes")
+    public static JavaType constructMapType(Class<? extends Map> mapClass, Class<?> keyClass, Class<?> valueClass) {
+        String name = String.format("map_%s_%s_%s", mapClass.getSimpleName(), keyClass.getSimpleName(), valueClass.getSimpleName());
+        return TYPE_MAPPING.computeIfAbsent(name, it -> {
+            TypeFactory typeFactory = OBJECT_MAPPER.getTypeFactory();
+            return typeFactory.constructMapType(mapClass, keyClass, valueClass);
         });
-        return parseJson(json, objectMapper, mapType);
     }
 
+    /**
+     * 返回一个可以将 snake_case 转为 camelCase 的 objectMapper
+     *
+     * @return objectMapper
+     */
     public static ObjectMapper fastJsonLikeMapper() {
         return FAST_JSON_LIKE_OBJECT_MAPPER;
-    }
-
-    public static <T> T parseJson(String json, JavaType javaType) {
-        return parseJson(json, OBJECT_MAPPER, javaType);
-    }
-
-    public static <T> T parseJson(String json, ReferenceType referenceType) {
-        return parseJson(json, OBJECT_MAPPER, referenceType);
-    }
-
-    public static <T> T parseJson(String json, Class<T> clazz) {
-        return parseJson(json, OBJECT_MAPPER, clazz);
-    }
-
-    public static <T> T parseJson(String json, Class<T> parametrized, Class<?>... parameterClasses) {
-        return parseJson(json, OBJECT_MAPPER, parametrized, parameterClasses);
-    }
-
-    public static <T> List<T> parseList(String json, Class<T> clazz) {
-        return parseList(json, OBJECT_MAPPER, clazz);
-    }
-
-    public static <T> List<T> parseList(String json, JavaType javaType) {
-        return parseList(json, OBJECT_MAPPER, javaType);
-    }
-
-    public static <K, V> Map<K, V> parseMap(String json, Class<K> kClazz, Class<V> vClazz) {
-        return parseMap(json, OBJECT_MAPPER, kClazz, vClazz);
     }
 
 }
