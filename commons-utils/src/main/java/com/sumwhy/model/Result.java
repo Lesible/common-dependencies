@@ -54,27 +54,24 @@ public class Result<T> {
         return code;
     }
 
-    public Result<T> setCode(Integer code) {
+    public void setCode(Integer code) {
         this.code = code;
-        return this;
     }
 
     public String getMessage() {
         return message;
     }
 
-    public Result<T> setMessage(String message) {
+    public void setMessage(String message) {
         this.message = message;
-        return this;
     }
 
     public T getData() {
         return data;
     }
 
-    public Result<T> setData(T data) {
+    public void setData(T data) {
         this.data = data;
-        return this;
     }
 
     @Override
