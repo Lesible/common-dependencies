@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.type.ReferenceType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +41,6 @@ public class JsonUtil {
         FAST_JSON_LIKE_OBJECT_MAPPER.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         FAST_JSON_LIKE_OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         FAST_JSON_LIKE_OBJECT_MAPPER.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
-
     }
 
     private JsonUtil() {
@@ -80,6 +78,8 @@ public class JsonUtil {
      * @param source           来源
      * @param parametrized     范型基本类
      * @param parameterClasses 范型上面的类
+     * @param <T>              Class 的范型
+     * @return 拷贝后的结果
      */
     public static <T> T deepClone(Object source, Class<?> parametrized, Class<?>... parameterClasses) {
         JavaType javaType = constructType(parametrized, parameterClasses);
@@ -91,6 +91,8 @@ public class JsonUtil {
      *
      * @param source   来源
      * @param javaType 类型
+     * @param <T>      Class 的范型
+     * @return 拷贝后的结果
      */
     public static <T> T deepClone(Object source, JavaType javaType) {
         return OBJECT_MAPPER.convertValue(source, javaType);
@@ -101,6 +103,8 @@ public class JsonUtil {
      *
      * @param source 来源
      * @param target 目标
+     * @param <T>    Class 的范型
+     * @return 更新后的数据
      */
     public static <T> T updateValue(Object source, T target) {
         try {
