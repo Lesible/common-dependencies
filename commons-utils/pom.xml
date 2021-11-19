@@ -6,7 +6,7 @@
 
     <groupId>com.sumwhy.tagvv</groupId>
     <artifactId>commons-utils</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <properties>
         <matrix.commons.version>${project.version}</matrix.commons.version>
