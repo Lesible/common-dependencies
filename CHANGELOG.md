@@ -1,3 +1,6 @@
+## [1.0.5] 2021-12-03
+- modify Result static method
+
 ## [1.0.3] 2021-11-19
 - JsonUtil improve
 

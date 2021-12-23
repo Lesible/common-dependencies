@@ -23,6 +23,7 @@ public class JsonUtil {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Map<String, JavaType> TYPE_MAPPING = new ConcurrentHashMap<>();
     private static final ObjectMapper FAST_JSON_LIKE_OBJECT_MAPPER = new ObjectMapper();
+    private static final TypeFactory TYPE_FACTORY = OBJECT_MAPPER.getTypeFactory();
 
 
     static {
@@ -352,8 +353,12 @@ public class JsonUtil {
             name = name + "_" +
                     Arrays.stream(parameterClasses).map(Class::getSimpleName).collect(Collectors.joining("_"));
         }
-        return TYPE_MAPPING.computeIfAbsent(name, it ->
-                OBJECT_MAPPER.getTypeFactory().constructParametricType(rawType, parameterClasses));
+        return TYPE_MAPPING.computeIfAbsent(name, it -> {
+            if (parameterClasses == null || parameterClasses.length == 0) {
+                return TYPE_FACTORY.constructType(rawType);
+            }
+            return TYPE_FACTORY.constructParametricType(rawType, parameterClasses);
+        });
     }
 
     /**
@@ -368,8 +373,12 @@ public class JsonUtil {
         if (javaType != null) {
             name = name + "_" + javaType.getTypeName();
         }
-        return TYPE_MAPPING.computeIfAbsent(name, it ->
-                OBJECT_MAPPER.getTypeFactory().constructParametricType(rawType, javaType));
+        return TYPE_MAPPING.computeIfAbsent(name, it -> {
+            if (javaType == null) {
+                return TYPE_FACTORY.constructType(rawType);
+            }
+            return TYPE_FACTORY.constructParametricType(rawType, javaType);
+        });
     }
 
     /**
@@ -382,7 +391,7 @@ public class JsonUtil {
     @SuppressWarnings("rawtypes")
     public static JavaType constructCollectionType(Class<? extends Collection> colClass, JavaType javaType) {
         String name = String.format("col_%s_%s", colClass.getSimpleName(), javaType.getTypeName());
-        return TYPE_MAPPING.computeIfAbsent(name, it -> OBJECT_MAPPER.getTypeFactory().constructCollectionType(colClass, javaType));
+        return TYPE_MAPPING.computeIfAbsent(name, it -> TYPE_FACTORY.constructCollectionType(colClass, javaType));
     }
 
     /**
@@ -395,7 +404,7 @@ public class JsonUtil {
     @SuppressWarnings("rawtypes")
     public static JavaType constructCollectionType(Class<? extends Collection> colClass, Class<?> clazz) {
         String name = String.format("col_%s_%s", colClass.getSimpleName(), clazz.getSimpleName());
-        return TYPE_MAPPING.computeIfAbsent(name, it -> OBJECT_MAPPER.getTypeFactory().constructCollectionType(colClass, clazz));
+        return TYPE_MAPPING.computeIfAbsent(name, it -> TYPE_FACTORY.constructCollectionType(colClass, clazz));
     }
 
     /**
@@ -409,10 +418,7 @@ public class JsonUtil {
     @SuppressWarnings("rawtypes")
     public static JavaType constructMapType(Class<? extends Map> mapClass, JavaType keyType, JavaType valueType) {
         String name = String.format("map_%s_%s_%s", mapClass.getSimpleName(), keyType.getTypeName(), valueType.getTypeName());
-        return TYPE_MAPPING.computeIfAbsent(name, it -> {
-            TypeFactory typeFactory = OBJECT_MAPPER.getTypeFactory();
-            return typeFactory.constructMapType(mapClass, keyType, valueType);
-        });
+        return TYPE_MAPPING.computeIfAbsent(name, it -> TYPE_FACTORY.constructMapType(mapClass, keyType, valueType));
     }
 
     /**
@@ -426,10 +432,7 @@ public class JsonUtil {
     @SuppressWarnings("rawtypes")
     public static JavaType constructMapType(Class<? extends Map> mapClass, Class<?> keyClass, Class<?> valueClass) {
         String name = String.format("map_%s_%s_%s", mapClass.getSimpleName(), keyClass.getSimpleName(), valueClass.getSimpleName());
-        return TYPE_MAPPING.computeIfAbsent(name, it -> {
-            TypeFactory typeFactory = OBJECT_MAPPER.getTypeFactory();
-            return typeFactory.constructMapType(mapClass, keyClass, valueClass);
-        });
+        return TYPE_MAPPING.computeIfAbsent(name, it -> TYPE_FACTORY.constructMapType(mapClass, keyClass, valueClass));
     }
 
     /**

@@ -30,7 +30,7 @@ public class Result<T> {
     public Result() {
     }
 
-    public static Result<Void> successMsg(String msg) {
+    public static <T> Result<T> successMsg(String msg) {
         return new Result<>(0, msg, null);
     }
 
@@ -42,11 +42,11 @@ public class Result<T> {
         return new Result<>(0, "success", data);
     }
 
-    public static Result<Void> errorMsg(String msg) {
+    public static <T> Result<T> errorMsg(String msg) {
         return new Result<>(500, msg, null);
     }
 
-    public static Result<Void> errorMsg(Integer code, String msg) {
+    public static <T> Result<T> errorMsg(Integer code, String msg) {
         return new Result<>(code, msg, null);
     }
 
