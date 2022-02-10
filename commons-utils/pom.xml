@@ -6,7 +6,7 @@
 
     <groupId>com.sumwhy.tagvv</groupId>
     <artifactId>commons-utils</artifactId>
-    <version>2.0.3</version>
+    <version>2.0.4</version>
 
     <properties>
         <matrix.commons.version>${project.version}</matrix.commons.version>
@@ -105,17 +105,23 @@
 
     </build>
 
+    <repositories>
+        <repository>
+            <id>sumwhy nexus</id>
+            <url>https://xm7.cn/nexus/repository/maven-public</url>
+        </repository>
+    </repositories>
+
     <distributionManagement>
         <repository>
             <id>releases</id>
             <name>nexus release</name>
-            <url>http://115.231.104.66:8888/repository/maven-releases/</url>
+            <url>https://xm7.cn/nexus/repository/maven-releases/</url>
         </repository>
         <snapshotRepository>
             <id>snapshots</id>
             <name>nexus snapshots</name>
-            <url>http://115.231.104.66:8888/repository/maven-snapshots/</url>
+            <url>https://xm7.cn/nexus/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
-
 </project>
