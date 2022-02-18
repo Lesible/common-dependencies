@@ -6,10 +6,10 @@
 
     <groupId>com.sumwhy.tagvv</groupId>
     <artifactId>commons-utils</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
 
     <properties>
-        <matrix.commons.version>${project.version}</matrix.commons.version>
+        <matrix.commons.version>1.0.6</matrix.commons.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

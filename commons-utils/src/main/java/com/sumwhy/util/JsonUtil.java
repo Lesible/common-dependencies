@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -58,6 +60,16 @@ public class JsonUtil {
     }
 
     /**
+     * 使用默认的 objectMapper 将对象写入流
+     *
+     * @param o  对象
+     * @param os 输出流
+     */
+    public static void writeJson2OutputStream(OutputStream os, Object o) {
+        writeJson2OutputStream(os, o, OBJECT_MAPPER);
+    }
+
+    /**
      * 使用指定的 objectMapper 转换为 jsonStr
      *
      * @param o            对象
@@ -70,6 +82,21 @@ public class JsonUtil {
         } catch (JsonProcessingException e) {
             log.error("转换为 json 出错,对象信息:{}", o, e);
             return "{}";
+        }
+    }
+
+    /**
+     * 使用指定的 objectMapper 将对象写入流
+     *
+     * @param o            对象
+     * @param os           输出流
+     * @param objectMapper 指定转换规则的 objectMapper
+     */
+    public static void writeJson2OutputStream(OutputStream os, Object o, ObjectMapper objectMapper) {
+        try {
+            objectMapper.writeValue(os, o);
+        } catch (IOException e) {
+            log.error("输出 json 到输出流失败,对象信息:{}", o, e);
         }
     }
 
